@@ -1,0 +1,79 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<title>Albion Market - Acceso</title>
+<style>
+  * { box-sizing: border-box; }
+  body { font-family: -apple-system, Segoe UI, Roboto, sans-serif;
+         background: #1a1a1a; color: #e0e0e0; margin: 0; padding: 20px;
+         min-height: 100vh; display: flex; align-items: center; justify-content: center; }
+  .card { background: #242424; padding: 32px; border-radius: 10px;
+          border: 1px solid #333; max-width: 460px; width: 100%; }
+  h1 { color: #ffd700; margin: 0 0 6px; }
+  .sub { color: #888; font-size: 13px; margin-bottom: 22px; line-height: 1.5; }
+  label { display: block; font-size: 12px; color: #aaa;
+          text-transform: uppercase; margin: 12px 0 4px; }
+  input { width: 100%; background: #1a1a1a; color: #e0e0e0;
+          border: 1px solid #444; padding: 10px 12px; border-radius: 4px;
+          font-size: 14px; font-family: monospace; }
+  input:focus { outline: none; border-color: #ffd700; }
+  button { background: #ffd700; color: #000; cursor: pointer; font-weight: bold;
+           border: none; padding: 11px 20px; border-radius: 4px; font-size: 14px;
+           margin-top: 16px; width: 100%; }
+  button:hover:not(:disabled) { background: #ffed4e; }
+  button:disabled { background: #555; color: #999; cursor: wait; }
+  .err { color: #e66; margin-top: 12px; font-size: 13px; min-height: 18px; }
+  .note { color: #666; font-size: 12px; margin-top: 18px; line-height: 1.5;
+          border-top: 1px solid #333; padding-top: 14px; }
+</style>
+</head>
+<body>
+<div class="card">
+  <h1>Albion Market</h1>
+  <div class="sub">
+    Esta web es solo para contribuidores. Introduce tu API key para acceder a
+    los datos de mercado.
+  </div>
+
+  <label>API key</label>
+  <input type="password" id="key" placeholder="alb_..." autofocus>
+  <button id="btn" onclick="login()">Acceder</button>
+  <div id="err" class="err"></div>
+
+  <div class="note">
+    Al entrar, registramos tu IP y dispositivo. Si detectamos que cambias de
+    dispositivo, el admin recibirá una alerta. Si necesitas cambiar de PC,
+    contacta con él.
+  </div>
+</div>
+
+<script>
+const $ = id => document.getElementById(id);
+
+async function login() {
+  const key = $('key').value.trim();
+  if (!key) return;
+  $('err').textContent = '';
+  $('btn').disabled = true;
+  try {
+    const r = await fetch('/api/v1/session', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({ api_key: key }),
+    });
+    const data = await r.json();
+    if (!r.ok) throw new Error(data.detail || r.status);
+    location.href = '/';
+  } catch (e) {
+    $('err').textContent = e.message;
+    $('btn').disabled = false;
+  }
+}
+
+$('key').addEventListener('keydown', e => {
+  if (e.key === 'Enter') login();
+});
+</script>
+</body>
+</html>

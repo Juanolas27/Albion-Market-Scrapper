@@ -1,0 +1,384 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<title>Albion Market - Admin</title>
+<style>
+  * { box-sizing: border-box; }
+  body { font-family: -apple-system, Segoe UI, Roboto, sans-serif;
+         background: #1a1a1a; color: #e0e0e0; margin: 0; padding: 20px; }
+  h1 { color: #ffd700; margin: 0 0 8px; }
+  h2 { color: #ffd700; margin: 24px 0 8px; font-size: 16px; }
+  .hint { color: #888; font-size: 13px; margin-bottom: 16px; }
+  input, select, button {
+    background: #2a2a2a; color: #e0e0e0; border: 1px solid #444;
+    padding: 8px 12px; border-radius: 4px; font-size: 14px;
+  }
+  input:focus { outline: none; border-color: #ffd700; }
+  button { background: #ffd700; color: #000; cursor: pointer;
+           font-weight: bold; border-color: #ffd700; }
+  button:hover { background: #ffed4e; }
+  button.danger { background: #c64; color: #fff; border-color: #c64; }
+  button.danger:hover { background: #e85; }
+  button.ghost { background: transparent; color: #e0e0e0; border-color: #555; }
+  button.ghost:hover { background: #2a2a2a; }
+  .login { max-width: 420px; margin: 60px auto; background: #242424;
+           padding: 24px; border-radius: 8px; border: 1px solid #333; }
+  .login label { display: block; font-size: 12px; color: #aaa;
+                 text-transform: uppercase; margin: 12px 0 4px; }
+  .login input { width: 100%; }
+  .err { color: #e66; margin-top: 10px; font-size: 13px; }
+  .banner { background: #242424; padding: 10px 14px; border-radius: 6px;
+            margin-bottom: 16px; display: flex; justify-content: space-between;
+            align-items: center; border-left: 3px solid #ffd700; }
+  table { width: 100%; border-collapse: collapse;
+          background: #2a2a2a; border-radius: 6px; overflow: hidden; }
+  th { background: #333; color: #ffd700; text-align: left;
+       padding: 10px; font-size: 12px; text-transform: uppercase; }
+  td { padding: 8px 10px; border-top: 1px solid #333; font-size: 13px; }
+  tr:hover td { background: #333; }
+  .disabled-row td { color: #666; }
+  .name-cell input { width: 140px; padding: 4px 8px; font-size: 13px; }
+  .badge { display: inline-block; padding: 2px 8px; border-radius: 10px;
+           font-size: 11px; font-weight: bold; }
+  .badge.ok { background: #264; color: #afd; }
+  .badge.off { background: #622; color: #faa; }
+  .badge.adm { background: #553; color: #ffd700; margin-left: 4px; }
+  .actions button { padding: 4px 10px; font-size: 12px; margin-right: 4px; }
+  .create-box { background: #242424; padding: 14px; border-radius: 6px;
+                margin-bottom: 16px; display: flex; gap: 10px; align-items: center; }
+  .new-key { background: #1a3a1a; border: 1px solid #4a7; padding: 12px;
+             border-radius: 6px; margin: 12px 0; font-family: monospace; }
+  .new-key .k { font-size: 14px; color: #ffd700; word-break: break-all;
+                user-select: all; }
+  .new-key .w { color: #faa; font-size: 12px; margin-top: 6px; }
+  .warn-row td { background: #3a1515 !important; }
+  .alert-pill { background: #c44; color: #fff; padding: 2px 8px;
+                border-radius: 10px; font-size: 11px; font-weight: bold; }
+  .modal-bg { position: fixed; inset: 0; background: rgba(0,0,0,.7);
+              display: none; align-items: center; justify-content: center;
+              z-index: 100; }
+  .modal-bg.show { display: flex; }
+  .modal { background: #242424; border: 1px solid #444; border-radius: 8px;
+           width: 90%; max-width: 900px; max-height: 85vh;
+           display: flex; flex-direction: column; }
+  .modal-head { padding: 14px 18px; border-bottom: 1px solid #333;
+                display: flex; justify-content: space-between; align-items: center; }
+  .modal-head h3 { margin: 0; color: #ffd700; font-size: 16px; }
+  .modal-body { padding: 14px 18px; overflow-y: auto; }
+  .summary-grid { display: grid; grid-template-columns: repeat(3, 1fr);
+                  gap: 10px; margin-bottom: 16px; }
+  .summary-box { background: #1a1a1a; padding: 10px 14px; border-radius: 6px;
+                 border-left: 3px solid #ffd700; }
+  .summary-box .label { font-size: 11px; color: #888; text-transform: uppercase; }
+  .summary-box .value { font-size: 18px; font-weight: bold; color: #fff; }
+  .summary-box.warn { border-left-color: #c44; }
+  .summary-box.warn .value { color: #faa; }
+  .log-table { font-size: 12px; width: 100%; }
+  .log-table td { padding: 6px 8px; }
+  .ua-cell { max-width: 320px; overflow: hidden; text-overflow: ellipsis;
+             white-space: nowrap; font-family: monospace; font-size: 11px;
+             color: #aaa; }
+</style>
+</head>
+<body>
+
+<div id="login" class="login" style="display:none">
+  <h1>Panel admin</h1>
+  <div class="hint">Introduce tu API key de administrador.</div>
+  <label>API key</label>
+  <input type="password" id="login-key" placeholder="alb_...">
+  <div style="margin-top:14px">
+    <button onclick="doLogin()">Entrar</button>
+  </div>
+  <div id="login-err" class="err"></div>
+</div>
+
+<div id="app" style="display:none">
+  <div class="banner">
+    <div><strong>Albion Market Admin</strong> &mdash; <span id="who"></span></div>
+    <div>
+      <a href="/" style="color:#9cf;margin-right:12px">Viewer publico</a>
+      <button class="ghost" onclick="logout()">Salir</button>
+    </div>
+  </div>
+
+  <h2>Crear usuario</h2>
+  <div class="create-box">
+    <input type="text" id="new-name" placeholder="nombre de usuario">
+    <button onclick="createUser()">Crear y emitir key</button>
+  </div>
+  <div id="new-key-box"></div>
+
+  <h2>Usuarios</h2>
+  <div class="hint">Renombra editando la celda; desactiva, reactiva, rota key o borra con los botones.</div>
+  <table>
+    <thead><tr>
+      <th>ID</th><th>Nombre</th><th>Estado</th>
+      <th style="text-align:right">Orders</th>
+      <th style="text-align:right">History</th>
+      <th>Ultimo visto</th>
+      <th>Acciones</th>
+    </tr></thead>
+    <tbody id="tbody"></tbody>
+  </table>
+</div>
+
+<script>
+let key = localStorage.getItem('alb_admin_key') || '';
+let me = null;
+
+async function api(method, path, body) {
+  const opts = { method, headers: { 'X-API-Key': key } };
+  if (body !== undefined) {
+    opts.headers['Content-Type'] = 'application/json';
+    opts.body = JSON.stringify(body);
+  }
+  const r = await fetch(path, opts);
+  const text = await r.text();
+  const data = text ? JSON.parse(text) : {};
+  if (!r.ok) throw new Error(data.detail || r.status);
+  return data;
+}
+
+async function boot() {
+  if (!key) return showLogin();
+  try {
+    me = await api('GET', '/api/v1/me');
+    if (!me.is_admin) {
+      document.getElementById('login-err').textContent =
+        'Tu usuario no es admin. Pide a un admin que te de permisos (CLI: py -m server.admin make-admin <nombre>).';
+      localStorage.removeItem('alb_admin_key');
+      return showLogin();
+    }
+    document.getElementById('who').textContent = `${me.name} (admin)`;
+    document.getElementById('login').style.display = 'none';
+    document.getElementById('app').style.display = 'block';
+    await loadUsers();
+  } catch (e) {
+    localStorage.removeItem('alb_admin_key');
+    showLogin(String(e.message || e));
+  }
+}
+
+function showLogin(err) {
+  document.getElementById('login').style.display = 'block';
+  document.getElementById('app').style.display = 'none';
+  if (err) document.getElementById('login-err').textContent = err;
+}
+
+async function doLogin() {
+  key = document.getElementById('login-key').value.trim();
+  if (!key) return;
+  localStorage.setItem('alb_admin_key', key);
+  document.getElementById('login-err').textContent = '';
+  await boot();
+}
+
+function logout() {
+  localStorage.removeItem('alb_admin_key');
+  key = '';
+  location.reload();
+}
+
+async function loadUsers() {
+  const users = await api('GET', '/api/v1/admin/users');
+  const tb = document.getElementById('tbody');
+  tb.innerHTML = users.map(u => `
+    <tr class="${u.disabled ? 'disabled-row' : ''}">
+      <td>${u.id}</td>
+      <td class="name-cell">
+        <input type="text" value="${esc(u.name)}" data-id="${u.id}" data-old="${esc(u.name)}"
+               onblur="maybeRename(this)">
+        ${u.is_admin ? '<span class="badge adm">ADMIN</span>' : ''}
+      </td>
+      <td><span class="badge ${u.disabled?'off':'ok'}">${u.disabled?'DESACTIVADO':'activo'}</span></td>
+      <td style="text-align:right">${u.orders_uploaded.toLocaleString()}</td>
+      <td style="text-align:right">${u.history_uploaded.toLocaleString()}</td>
+      <td>${u.last_seen_at ? u.last_seen_at.replace('T',' ').slice(0,19) : '-'}</td>
+      <td class="actions">
+        ${u.disabled
+          ? `<button onclick="act(${u.id},'enable')">Reactivar</button>`
+          : `<button class="danger" onclick="act(${u.id},'disable')">Desactivar</button>`}
+        <button class="ghost" onclick="showAccess(${u.id},'${esc(u.name)}')">Accesos</button>
+        <button class="ghost" onclick="rotate(${u.id},'${esc(u.name)}')">Rotar key</button>
+        <button class="danger" onclick="del(${u.id},'${esc(u.name)}')">Borrar</button>
+      </td>
+    </tr>`).join('');
+  // tras pintar, marcamos en rojo usuarios con mismatches recientes
+  checkMismatches(users);
+}
+
+async function checkMismatches(users) {
+  // Consulta en paralelo el access log de cada usuario y si tiene mismatches
+  // pinta su fila en rojo. Liviano: pedimos solo 20 filas por usuario.
+  for (const u of users) {
+    try {
+      const r = await api('GET', `/api/v1/admin/users/${u.id}/access?limit=20`);
+      if (r.summary.mismatch_count > 0) {
+        const row = document.querySelector(`tr input[data-id="${u.id}"]`)?.closest('tr');
+        if (row) {
+          row.classList.add('warn-row');
+          const nameCell = row.querySelector('.name-cell');
+          if (nameCell && !nameCell.querySelector('.alert-pill')) {
+            const pill = document.createElement('span');
+            pill.className = 'alert-pill';
+            pill.style.marginLeft = '6px';
+            pill.textContent = 'DEVICE MISMATCH';
+            pill.title = `${r.summary.mismatch_count} accesos desde otro dispositivo`;
+            nameCell.appendChild(pill);
+          }
+        }
+      }
+    } catch (e) { /* silencio */ }
+  }
+}
+
+async function showAccess(id, name) {
+  const r = await api('GET', `/api/v1/admin/users/${id}/access?limit=200`);
+  const modal = document.getElementById('modal');
+  document.getElementById('modal-title').textContent = `Accesos de ${name}`;
+
+  const pinnedAt = r.user.pinned_at ? r.user.pinned_at.replace('T',' ').slice(0,19) : '-';
+  const body = document.getElementById('modal-body');
+  body.innerHTML = `
+    <div class="summary-grid">
+      <div class="summary-box"><div class="label">IPs distintas</div>
+        <div class="value">${r.summary.distinct_ips}</div></div>
+      <div class="summary-box"><div class="label">Dispositivos distintos</div>
+        <div class="value">${r.summary.distinct_devices}</div></div>
+      <div class="summary-box ${r.summary.mismatch_count?'warn':''}">
+        <div class="label">Cambios de dispositivo</div>
+        <div class="value">${r.summary.mismatch_count}</div></div>
+    </div>
+    <div style="margin-bottom:10px;color:#888;font-size:12px;line-height:1.6">
+      <div><b style="color:#ffd700">Dispositivo pineado:</b> ${esc(r.user.pinned_hostname || '-')}
+           (<code>${esc(r.user.pinned_stable_id || r.user.pinned_ua_hash || '-')}</code>)</div>
+      <div><b style="color:#ffd700">Machine GUID:</b> <code>${esc(r.user.pinned_machine_guid || '-')}</code></div>
+      <div><b style="color:#ffd700">IP inicial:</b> <code>${esc(r.user.pinned_ip || '-')}</code>
+           &mdash; desde ${pinnedAt}</div>
+      <button class="ghost" style="padding:2px 8px;font-size:11px;margin-top:6px"
+              onclick="unpinDevice(${id}, '${esc(name)}')">Resetear pinned</button>
+    </div>
+    <table class="log-table">
+      <thead><tr>
+        <th>Cuando</th><th>IP</th><th>Host</th><th>Device</th><th>Ruta</th><th>Match</th>
+      </tr></thead>
+      <tbody>
+        ${r.recent.map((x, i) => `
+          <tr ${x.device_match?'':'class="warn-row"'} style="cursor:pointer"
+              onclick="toggleDetail(${i})">
+            <td>${x.at.replace('T',' ').slice(0,19)}</td>
+            <td>${esc(x.ip)}</td>
+            <td>${esc(x.hostname || '-')}</td>
+            <td><code style="font-size:10px">${esc((x.stable_id||x.ua_hash||'').slice(0,12))}</code></td>
+            <td>${esc(x.path)}</td>
+            <td>${x.device_match ? 'OK' : '<span class="alert-pill">MISMATCH</span>'}</td>
+          </tr>
+          <tr id="detail-${i}" style="display:none"><td colspan="6">
+            <div style="background:#0d0d0d;padding:8px;border-radius:4px;font-size:11px">
+              <div><b>UA:</b> ${esc(x.user_agent)}</div>
+              ${x.device_info ? `<div><b>Device Info:</b>
+                <pre style="white-space:pre-wrap;word-break:break-all;margin:4px 0;color:#9cf">${esc(formatDev(x.device_info))}</pre>
+              </div>` : ''}
+            </div>
+          </td></tr>
+        `).join('')}
+      </tbody>
+    </table>`;
+  modal.classList.add('show');
+}
+
+async function unpinDevice(id, name) {
+  if (!confirm(`Resetear dispositivo pineado de ${name}? El proximo login quedara pineado.`)) return;
+  try {
+    await api('POST', `/api/v1/admin/users/${id}/unpin`);
+    document.getElementById('modal').classList.remove('show');
+    await loadUsers();
+  } catch (e) { alert(e.message); }
+}
+
+function closeModal() {
+  document.getElementById('modal').classList.remove('show');
+}
+
+function toggleDetail(i) {
+  const row = document.getElementById('detail-' + i);
+  if (row) row.style.display = row.style.display === 'none' ? '' : 'none';
+}
+
+function formatDev(s) {
+  try { return JSON.stringify(JSON.parse(s), null, 2); }
+  catch { return s; }
+}
+
+async function createUser() {
+  const name = document.getElementById('new-name').value.trim();
+  if (!name) return;
+  try {
+    const r = await api('POST', '/api/v1/admin/users', { name });
+    document.getElementById('new-name').value = '';
+    showKey(r);
+    await loadUsers();
+  } catch (e) { alert(e.message); }
+}
+
+async function act(id, action) {
+  if (action === 'disable' && !confirm('Desactivar este usuario?')) return;
+  try { await api('POST', `/api/v1/admin/users/${id}/${action}`); await loadUsers(); }
+  catch (e) { alert(e.message); }
+}
+
+async function rotate(id, name) {
+  if (!confirm(`Rotar key de ${name}? La anterior dejara de funcionar.`)) return;
+  try {
+    const r = await api('POST', `/api/v1/admin/users/${id}/rotate`);
+    showKey(r);
+    await loadUsers();
+  } catch (e) { alert(e.message); }
+}
+
+async function del(id, name) {
+  if (!confirm(`Borrar usuario ${name}? Esta accion no se puede deshacer.`)) return;
+  try { await api('DELETE', `/api/v1/admin/users/${id}`); await loadUsers(); }
+  catch (e) { alert(e.message); }
+}
+
+async function maybeRename(inp) {
+  const id = inp.dataset.id;
+  const oldName = inp.dataset.old;
+  const name = inp.value.trim();
+  if (!name || name === oldName) { inp.value = oldName; return; }
+  try {
+    await api('PATCH', `/api/v1/admin/users/${id}`, { name });
+    inp.dataset.old = name;
+  } catch (e) { alert(e.message); inp.value = oldName; }
+}
+
+function showKey(r) {
+  const box = document.getElementById('new-key-box');
+  box.innerHTML = `
+    <div class="new-key">
+      <div>Nueva API key para <strong>${esc(r.name)}</strong> (id=${r.id}):</div>
+      <div class="k">${esc(r.api_key)}</div>
+      <div class="w">Guarda esta key. No se puede recuperar despues. Comparte por canal seguro.</div>
+    </div>`;
+}
+
+function esc(s){return String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
+
+boot();
+</script>
+
+<div id="modal" class="modal-bg" onclick="if(event.target===this)closeModal()">
+  <div class="modal">
+    <div class="modal-head">
+      <h3 id="modal-title">Accesos</h3>
+      <button class="ghost" onclick="closeModal()">Cerrar</button>
+    </div>
+    <div class="modal-body" id="modal-body"></div>
+  </div>
+</div>
+
+</body>
+</html>

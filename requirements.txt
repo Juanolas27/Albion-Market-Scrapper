@@ -1,0 +1,12 @@
+scapy==2.6.1
+photon-packet-parser==0.1.2
+psutil==6.1.1
+sqlalchemy==2.0.36
+psycopg[binary]==3.2.4
+pydantic==2.10.4
+pydantic-settings==2.7.1
+pyyaml==6.0.2
+structlog==24.4.0
+click==8.1.8
+alembic==1.14.1
+pyautogui==0.9.54

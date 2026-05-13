@@ -1,0 +1,17 @@
+#;Categoria;Subcats Col2 (sin Todo);Items Col3 por subcat (sin Todo);Tiene Col4?;Items Col4
+1;Armas;17;8 cada una;No;-
+2;Armadura de Pecho;3;9 cada una;No;-
+3;Armadura de Cabeza;3;9 cada una;No;-
+4;Armadura de Pies;3;9 cada una;No;-
+5;Armas Secundarias;3;6 cada una;No;-
+6;Capas;15 (hojas);-;No;-
+7;Bolsas;2 (hojas);-;No;-
+8;Montura;3;13/16/13;No;-
+9;Consumible;4;9/16/6/2;No;-
+10;Equipo de Recoleccion;7;6/5/5/5/5/5/1;No;-
+11;Fabricacion;6;5/5/3/6/3/10;sub5: Si;2/7
+12;Artefacto;8;17/3/3/3/3/5/14/?;subs 1-5: Si;5 cada una
+13;Agricultura;5;2 cada una;Si;8 cada una
+14;Mueble;6 (hojas);1/1/3/1/1/4;No;-
+15;Cosmetica;9 (hojas);1/12/1/1/1/1/1/1/1;No;-
+16;Otros;10;1/4/6(col4:1-13-10-12-1-1)/1/1/1(col4:3-1-1)/8/4(col4:1-4-3-3)/12(col4:1-2-19-19-19-19-19-19-19-19-19-19)/3(col4:1-7-1);Si (algunos);ver detalle

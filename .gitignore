@@ -1,0 +1,72 @@
+# ===== Python =====
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+*.egg
+*.egg-info/
+build/
+dist/
+.eggs/
+pip-log.txt
+pip-delete-this-directory.txt
+
+# ===== Virtual envs =====
+.venv/
+venv/
+env/
+ENV/
+.virtualenv/
+
+# ===== Editor / OS =====
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# ===== Logs / dumps =====
+*.log
+data/
+!server/data/
+server/data/*.db
+server/data/*.db-journal
+server/data/*.db-wal
+server/data/*.db-shm
+
+# Photon dumps / capturas crudas
+photon_dump*.bin
+photon_dump*.txt
+*.pcap
+
+# ===== Binarios locales =====
+cloudflared.exe
+cloudflared-*
+*.zip
+*.7z
+*.rar
+
+# ===== Secrets / config local =====
+.env
+.env.*
+!.env.example
+config.yml
+config.local.yaml
+config/settings.yaml
+**/credentials.json
+*.pem
+
+# Cloudflare tunnel credentials
+.cloudflared/
+
+# ===== Alembic — solo versions generadas localmente =====
+# (las migraciones aprobadas SÍ se commitean dentro de alembic/versions/)
+
+# ===== Misc proyecto =====
+query
+*.bak
+.claude/

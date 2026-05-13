@@ -1,0 +1,918 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<title>Albion Market Viewer</title>
+<style>
+  * { box-sizing: border-box; }
+  body { font-family: -apple-system, Segoe UI, Roboto, sans-serif;
+         background: #1a1a1a; color: #e0e0e0; margin: 0; padding: 0; }
+  a { color: #9cf; }
+  h1 { color: #ffd700; margin: 0; font-size: 22px; }
+  header { display: flex; justify-content: space-between; align-items: center;
+           padding: 10px 18px; background: #111; border-bottom: 1px solid #333; }
+  header nav a { margin-right: 14px; font-size: 14px; cursor: pointer; }
+  header nav a.active { color: #ffd700; font-weight: bold; }
+  #me-info { color: #9c9; font-size: 12px; margin-right: 12px; }
+
+  main { display: flex; height: calc(100vh - 48px); }
+  aside { width: 260px; min-width: 260px; background: #1f1f1f; border-right: 1px solid #333;
+          overflow-y: auto; padding: 12px 10px; font-size: 13px; }
+  aside h3 { margin: 10px 0 6px; color: #ffd700; font-size: 12px; text-transform: uppercase; }
+  aside .cat { display: block; padding: 5px 8px; border-radius: 4px; cursor: pointer; color: #ccc; }
+  aside .cat:hover { background: #2a2a2a; }
+  aside .cat.active { background: #3a2f00; color: #ffd700; font-weight: bold; }
+  aside .cat .count { float: right; color: #666; font-weight: normal; font-size: 11px; }
+  aside .sub { display: block; padding: 3px 8px 3px 22px; border-radius: 4px; cursor: pointer;
+               color: #aaa; font-size: 12px; }
+  aside .sub:hover { background: #272727; }
+  aside .sub.active { background: #2f2a15; color: #ffd700; }
+
+  section.content { flex: 1; overflow-y: auto; padding: 14px 18px; }
+
+  input, select, button { background: #2a2a2a; color: #e0e0e0;
+      border: 1px solid #444; padding: 7px 10px; border-radius: 4px; font-size: 13px; }
+  input:focus, select:focus { outline: none; border-color: #ffd700; }
+  button { background: #ffd700; color: #000; cursor: pointer; font-weight: bold; border-color: #ffd700; }
+  button:hover { background: #ffed4e; }
+  button.secondary { background: #2a2a2a; color: #ddd; border-color: #555; }
+
+  .filters { display: flex; gap: 8px; margin-bottom: 12px; flex-wrap: wrap; align-items: center; }
+  .chip { display: inline-block; padding: 3px 8px; background: #333; color: #ccc;
+          border-radius: 10px; font-size: 11px; cursor: pointer; user-select: none; }
+  .chip.on { background: #ffd700; color: #000; font-weight: bold; }
+
+  table { width: 100%; border-collapse: collapse;
+      background: #232323; border-radius: 6px; overflow: hidden; }
+  th { background: #333; color: #ffd700; text-align: left;
+      padding: 8px 10px; font-size: 11px; text-transform: uppercase;
+      cursor: pointer; user-select: none; position: sticky; top: 0; }
+  th:hover { background: #3a3a3a; }
+  th.sorted-asc::after { content: " \25B2"; }
+  th.sorted-desc::after { content: " \25BC"; }
+  td { padding: 6px 10px; border-top: 1px solid #2d2d2d; font-size: 13px;
+       vertical-align: middle; }
+  tr { cursor: pointer; }
+  tr:hover td { background: #2d2d2d; }
+  .item-img { width: 40px; height: 40px; vertical-align: middle;
+      margin-right: 8px; image-rendering: pixelated; }
+  .item-img.small { width: 28px; height: 28px; }
+  .item-cell { display: flex; align-items: center; }
+  .price { color: #ffd700; font-weight: bold; text-align: right; white-space: nowrap; }
+  .amount { text-align: right; color: #6cf; white-space: nowrap; }
+  .enchant { color: #f96; font-weight: bold; text-align: center; }
+  .quality { text-align: center; }
+  .city { color: #9c9; }
+  .time { color: #888; font-size: 11px; white-space: nowrap; }
+  .uploader { color: #bda; font-size: 12px; }
+  .margin { color: #6f6; font-weight: bold; text-align: right; }
+  .margin.neg { color: #f66; }
+  .loading { text-align: center; padding: 40px; color: #888; }
+  .empty { text-align: center; padding: 40px; color: #666; }
+  .muted { color: #777; font-size: 11px; }
+  .pill { padding: 1px 6px; border-radius: 3px; font-size: 11px; font-weight: bold; }
+  .pill-adm { background: #7cf; color: #000; }
+  .pill-ok { color: #6f6; }
+  .pill-no { color: #f66; }
+
+  /* Stats */
+  .stats { display: flex; gap: 12px; margin-bottom: 12px; flex-wrap: wrap; }
+  .stat { background: #2a2a2a; padding: 8px 14px; border-radius: 5px; border-left: 3px solid #ffd700; }
+  .stat .label { font-size: 10px; color: #888; text-transform: uppercase; }
+  .stat .value { font-size: 16px; font-weight: bold; color: #fff; }
+
+  /* Modal blocker */
+  .gate-blocker { position: fixed; inset: 0; background: rgba(10,10,10,0.95);
+      z-index: 9999; display: none; flex-direction: column;
+      justify-content: center; align-items: center; text-align: center; padding: 40px; }
+  .gate-blocker.visible { display: flex; }
+  .gate-blocker h2 { color: #ff6b6b; font-size: 32px; margin: 0 0 12px; }
+  .gate-blocker p { color: #e0e0e0; font-size: 16px; max-width: 620px; line-height: 1.5; }
+  .gate-blocker .progress { margin: 18px 0 10px; font-size: 22px; color: #ffd700; font-weight: bold; }
+  .gate-blocker .bar { width: 420px; max-width: 90%; height: 14px; background: #333;
+      border-radius: 7px; overflow: hidden; margin-top: 4px; }
+  .gate-blocker .bar > div { height: 100%; background: linear-gradient(90deg,#ffb300,#ffd700); transition: width .4s; }
+
+  /* Modal */
+  .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.75);
+      z-index: 9998; display: none; justify-content: center; align-items: flex-start;
+      padding-top: 50px; padding-bottom: 30px; overflow-y: auto; }
+  .modal-overlay.visible { display: flex; }
+  .modal { background: #222; border: 1px solid #444; border-radius: 8px;
+      width: 880px; max-width: 95%; padding: 20px; }
+  .modal h3 { color: #ffd700; margin: 0 0 12px; }
+  .close { float: right; color: #888; cursor: pointer; font-size: 22px; margin-top: -6px; }
+  .close:hover { color: #fff; }
+
+  .detail-head { display: flex; gap: 18px; align-items: center; margin-bottom: 14px; }
+  .detail-head img { width: 90px; height: 90px; image-rendering: pixelated; }
+  .detail-head .meta { flex: 1; }
+  .detail-head .meta h2 { margin: 0 0 4px; color: #ffd700; font-size: 22px; }
+  .detail-head .meta .sub { color: #aaa; font-size: 13px; }
+  .detail-head .meta .id { color: #666; font-size: 11px; font-family: monospace; }
+
+  .detail-selectors { display: flex; gap: 8px; margin-bottom: 12px; flex-wrap: wrap; }
+  .detail-selectors label { font-size: 11px; color: #888; display: block; }
+
+  .best { background: rgba(110, 255, 120, 0.08); }
+  .worst { background: rgba(255, 110, 110, 0.06); }
+
+  /* Pagination */
+  .pagination { margin-top: 10px; display: flex; gap: 10px; align-items: center; font-size: 12px; }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>Albion Market</h1>
+  <nav id="nav">
+    <a data-view="search" class="active">Buscar</a>
+    <a data-view="prices">Precios recientes</a>
+    <a data-view="flips">Venta rápida</a>
+    <a data-view="crafting">Crafteos</a>
+    <span id="me-info"></span>
+    <a id="contrib-link">Contribuciones</a>
+    <a href="/admin" id="admin-link">Admin</a>
+    <a id="logout-link">Cerrar sesión</a>
+  </nav>
+</header>
+
+<main>
+  <!-- Sidebar de categorias -->
+  <aside id="sidebar">
+    <h3>Buscar</h3>
+    <input id="f-item" placeholder="nombre o id" style="width:100%;margin-bottom:10px">
+
+    <h3>Tier</h3>
+    <div id="tier-chips" style="display:flex;flex-wrap:wrap;gap:4px">
+      <span class="chip on" data-tier="0">Todos</span>
+      <span class="chip" data-tier="1">T1</span><span class="chip" data-tier="2">T2</span>
+      <span class="chip" data-tier="3">T3</span><span class="chip" data-tier="4">T4</span>
+      <span class="chip" data-tier="5">T5</span><span class="chip" data-tier="6">T6</span>
+      <span class="chip" data-tier="7">T7</span><span class="chip" data-tier="8">T8</span>
+    </div>
+
+    <h3>Categorías</h3>
+    <div id="cat-tree"><div class="loading">...</div></div>
+  </aside>
+
+  <section class="content" id="main-content">
+    <!-- VIEW: search (catalogo) -->
+    <div data-view="search">
+      <div class="filters">
+        <span id="cat-breadcrumb" class="muted">Todas</span>
+        <span style="margin-left:auto" class="muted" id="search-count">0 items</span>
+      </div>
+      <table>
+        <thead><tr>
+          <th>Item</th>
+          <th>Tier</th>
+          <th>Categoría</th>
+          <th>Slot</th>
+        </tr></thead>
+        <tbody id="catalog-tbody"><tr><td colspan="4" class="loading">Cargando...</td></tr></tbody>
+      </table>
+      <div class="pagination">
+        <button class="secondary" onclick="pageCat(-1)">&laquo;</button>
+        <span id="cat-page-info">1</span>
+        <button class="secondary" onclick="pageCat(1)">&raquo;</button>
+      </div>
+    </div>
+
+    <!-- VIEW: prices (tabla clasica de precios recientes) -->
+    <div data-view="prices" style="display:none">
+      <div class="stats">
+        <div class="stat"><div class="label">Items únicos</div><div class="value" id="stat-unique">-</div></div>
+        <div class="stat"><div class="label">Total órdenes</div><div class="value" id="stat-orders">-</div></div>
+        <div class="stat"><div class="label">Mostrando</div><div class="value" id="stat-shown">-</div></div>
+        <div class="stat"><div class="label">Última captura</div><div class="value" id="stat-latest">-</div></div>
+      </div>
+      <div class="filters">
+        <input type="text" id="p-item" placeholder="Buscar item" style="width:200px">
+        <select id="p-city"><option value="">Ciudad (todas)</option></select>
+        <select id="p-type">
+          <option value="">Todo</option>
+          <option value="offer">Ventas</option>
+          <option value="request">Compras</option>
+        </select>
+        <select id="p-mode">
+          <option value="lowest">Precio más bajo</option>
+          <option value="all">Todas</option>
+        </select>
+        <button onclick="loadPrices()">Actualizar</button>
+        <label style="margin-left:8px"><input type="checkbox" id="auto"> Auto 10s</label>
+      </div>
+      <table>
+        <thead><tr>
+          <th data-sort="item_albion_id">Item</th>
+          <th data-sort="quality_level">Q</th>
+          <th data-sort="enchantment_level">E</th>
+          <th data-sort="unit_price_silver" style="text-align:right">Precio</th>
+          <th data-sort="amount" style="text-align:right">Cant</th>
+          <th data-sort="city">Ciudad</th>
+          <th data-sort="captured_at">Capturado</th>
+          <th data-sort="uploader">Contribuidor</th>
+        </tr></thead>
+        <tbody id="prices-tbody"><tr><td colspan="8" class="loading">Cargando...</td></tr></tbody>
+      </table>
+      <div class="pagination">
+        <button class="secondary" onclick="pagePrices(-1)">&laquo;</button>
+        <span id="prices-page-info">1</span>
+        <button class="secondary" onclick="pagePrices(1)">&raquo;</button>
+      </div>
+    </div>
+
+    <!-- VIEW: flips -->
+    <div data-view="flips" style="display:none">
+      <div class="filters">
+        <label class="muted">Comprar en<br>
+          <select id="flip-buy"><option value="">Cualquiera</option></select></label>
+        <label class="muted">Vender en<br>
+          <select id="flip-sell"><option value="">Cualquiera</option></select></label>
+        <label class="muted">Categoría<br>
+          <select id="flip-cat"><option value="">Todas</option></select></label>
+        <label class="muted">Tier<br>
+          <select id="flip-tier">
+            <option value="0">Todos</option>
+            <option>1</option><option>2</option><option>3</option><option>4</option>
+            <option>5</option><option>6</option><option>7</option><option>8</option>
+          </select></label>
+        <label class="muted">Margen mín<br>
+          <input id="flip-min-margin" type="number" value="1000" style="width:90px"></label>
+        <label class="muted">Margen % mín<br>
+          <input id="flip-min-pct" type="number" value="5" step="0.5" style="width:70px"></label>
+        <label class="muted">Max antigüedad (min)<br>
+          <input id="flip-age" type="number" value="60" style="width:70px"></label>
+        <button onclick="loadFlips()" style="align-self:flex-end">Buscar</button>
+        <span class="muted" id="flip-count" style="align-self:flex-end"></span>
+      </div>
+      <table>
+        <thead><tr>
+          <th>Item</th><th>Q</th><th>E</th>
+          <th>Comprar en</th><th style="text-align:right">Precio compra</th><th style="text-align:right">Stock</th>
+          <th>Vender en</th><th style="text-align:right">Precio venta</th><th style="text-align:right">Demanda</th>
+          <th style="text-align:right">Margen</th><th style="text-align:right">%</th>
+        </tr></thead>
+        <tbody id="flips-tbody"><tr><td colspan="11" class="empty">Pulsa Buscar</td></tr></tbody>
+      </table>
+    </div>
+
+    <!-- VIEW: crafting -->
+    <div data-view="crafting" style="display:none">
+      <div class="filters">
+        <label class="muted">Categoría<br>
+          <select id="craft-cat"><option value="">Todas</option></select></label>
+        <label class="muted">Tier<br>
+          <select id="craft-tier">
+            <option value="0">Todos</option>
+            <option>1</option><option>2</option><option>3</option><option>4</option>
+            <option>5</option><option>6</option><option>7</option><option>8</option>
+          </select></label>
+        <label class="muted">Vender cómo<br>
+          <select id="craft-sell">
+            <option value="offer_undercut">Pasiva (undercut)</option>
+            <option value="instant">Instantánea (a compra)</option>
+          </select></label>
+        <label class="muted">Foco<br>
+          <select id="craft-focus">
+            <option value="0">Sin foco</option>
+            <option value="1">Con foco</option>
+          </select></label>
+        <label class="muted">Fee / 100 nutrición<br>
+          <input id="craft-fee" type="number" value="800" style="width:80px"></label>
+        <label class="muted">Beneficio mínimo<br>
+          <input id="craft-min-profit" type="number" value="0" style="width:100px"></label>
+        <label class="muted">Max antigüedad (min)<br>
+          <input id="craft-age" type="number" value="120" style="width:70px"></label>
+        <button onclick="loadCrafting()" style="align-self:flex-end">Calcular</button>
+        <span class="muted" id="craft-count" style="align-self:flex-end"></span>
+      </div>
+      <p class="muted" style="margin-top:-6px">
+        Beneficio por unidad crafteada = (precio venta × (1 − fee mercado)) − coste mats × (1 − return rate) − fee crafteo.
+        Return rate: sin foco 15.2% (24.8% en ciudad bonus) · con foco 43.5% (53.9% en ciudad bonus).
+        Ciudad bonus se marca con ⭐.
+      </p>
+      <table>
+        <thead><tr>
+          <th>Item</th><th>Tier</th>
+          <th>Mats en</th><th>Craftear en</th><th>Vender en</th>
+          <th style="text-align:right">Coste mats</th>
+          <th style="text-align:right">Coste neto</th>
+          <th style="text-align:right">Venta</th>
+          <th style="text-align:right">Ingreso neto</th>
+          <th style="text-align:right">Beneficio</th>
+          <th style="text-align:right">%</th>
+        </tr></thead>
+        <tbody id="crafting-tbody"><tr><td colspan="11" class="empty">Pulsa Calcular para ver los crafteos más rentables</td></tr></tbody>
+      </table>
+    </div>
+  </section>
+</main>
+
+<!-- Gate blocker -->
+<div id="gate" class="gate-blocker">
+  <h2>Acceso bloqueado</h2>
+  <p>Para ver los datos del mercado necesitas aportar al menos
+    <b><span id="gate-threshold">4000</span></b> capturas al día.
+    Esto mantiene la base de datos viva y justa entre contribuidores.</p>
+  <div class="progress"><span id="gate-current">0</span> / <span id="gate-threshold2">4000</span> hoy</div>
+  <div class="bar"><div id="gate-bar" style="width:0%"></div></div>
+  <p style="margin-top:20px;color:#aaa;font-size:14px">
+    Abre el launcher, selecciona tu ciudad y navega por el mercado en el juego.
+    Los admins pueden ver la página sin límites.</p>
+  <p><a id="gate-contrib-link">Ver ranking</a> &nbsp;·&nbsp; <a id="gate-logout-link">Cerrar sesión</a></p>
+</div>
+
+<!-- Contribuciones modal -->
+<div id="contrib-modal" class="modal-overlay">
+  <div class="modal">
+    <span class="close" id="contrib-close">&times;</span>
+    <h3>Contribuciones de hoy</h3>
+    <p class="muted">Umbral diario: <b><span id="contrib-threshold">4000</span></b> capturas. Reset a las 00:00 UTC.</p>
+    <table>
+      <thead><tr>
+        <th>Usuario</th><th style="text-align:right">Hoy</th>
+        <th style="text-align:right">Orders</th><th style="text-align:right">History</th>
+        <th style="text-align:right">Total global</th><th>Estado</th>
+      </tr></thead>
+      <tbody id="contrib-tbody"><tr><td colspan="6" class="loading">Cargando...</td></tr></tbody>
+    </table>
+  </div>
+</div>
+
+<!-- Item detail modal -->
+<div id="detail-modal" class="modal-overlay">
+  <div class="modal" id="detail-body">
+    <span class="close" id="detail-close">&times;</span>
+    <div class="loading">Cargando...</div>
+  </div>
+</div>
+
+<script>
+// ==========================================================
+// Estado global
+// ==========================================================
+const STATE = {
+  view: 'search',
+  cat: '', sub: '', tier: 0, q: '',
+  catalog: [], catPage: 0, CAT_PS: 50,
+  prices: [], pricesPage: 0, P_PS: 100, pricesSort: 'item_albion_id', pricesAsc: true,
+  priceTimer: null,
+  cities: [],
+  categoriesTree: [],
+  me: null,
+};
+const CITY_ICONS = {};
+
+// ==========================================================
+// Helpers
+// ==========================================================
+function esc(s){return String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
+function fmt(n){return Number(n||0).toLocaleString('es-ES');}
+function fmtSilver(n){return (Number(n||0)/1).toLocaleString('es-ES',{maximumFractionDigits:0});}
+function img(id,q,e){const s=(e&&e>0)?`@${e}`:'';return `https://render.albiononline.com/v1/item/${id}${s}.png?quality=${q||1}`;}
+function timeShort(t){return t ? String(t).replace('T',' ').slice(0,19) : '-';}
+
+async function api(url) {
+  const r = await fetch(url);
+  if (r.status === 403) {
+    const err = await r.json().catch(()=>({}));
+    const d = (err && err.detail) || {};
+    if (d && d.error === 'contribution_gate') showGate(d.contributions_today||0, d.threshold||4000);
+    throw new Error(d.message || 'Acceso denegado');
+  }
+  if (!r.ok) throw new Error('HTTP ' + r.status);
+  return r.json();
+}
+
+function showGate(current, threshold) {
+  const g = document.getElementById('gate');
+  g.classList.add('visible');
+  document.getElementById('gate-current').textContent = Number(current).toLocaleString();
+  document.getElementById('gate-threshold').textContent = Number(threshold).toLocaleString();
+  document.getElementById('gate-threshold2').textContent = Number(threshold).toLocaleString();
+  document.getElementById('gate-bar').style.width = Math.min(100, Math.round((current/threshold)*100)) + '%';
+}
+
+// ==========================================================
+// Routing de vistas
+// ==========================================================
+function showView(name) {
+  STATE.view = name;
+  document.querySelectorAll('nav a[data-view]').forEach(a=>a.classList.toggle('active', a.dataset.view===name));
+  document.querySelectorAll('section.content > div[data-view]').forEach(d=>{
+    d.style.display = (d.dataset.view===name) ? '' : 'none';
+  });
+  // sidebar solo util en search
+  document.getElementById('sidebar').style.display = (name==='search') ? '' : 'none';
+  if (name==='prices' && !STATE.prices.length) loadPrices();
+  if (name==='flips' && document.getElementById('flips-tbody').children.length<=1) {
+    // primera vez cargamos categorias en el select
+    populateFlipSelectors();
+  }
+  if (name==='crafting' && !STATE.craftingLoaded) {
+    populateCraftSelectors();
+    STATE.craftingLoaded = true;
+    loadCrafting();
+  }
+}
+document.querySelectorAll('nav a[data-view]').forEach(a=>{
+  a.addEventListener('click',(e)=>{e.preventDefault(); showView(a.dataset.view);});
+});
+
+// ==========================================================
+// Sesion / me / gate
+// ==========================================================
+async function loadMe() {
+  try {
+    const m = await (await fetch('/api/v1/me')).json();
+    STATE.me = m;
+    document.getElementById('me-info').textContent =
+      `${m.name}${m.is_admin?' (admin)':''} — hoy: ${fmt(m.contributions_today)}/${fmt(m.threshold)}`;
+    if (!m.is_admin) document.getElementById('admin-link').style.display='none';
+    if (!m.allowed) showGate(m.contributions_today, m.threshold);
+    return m;
+  } catch (e) { return null; }
+}
+
+document.getElementById('logout-link').addEventListener('click', async (e)=>{
+  e.preventDefault();
+  await fetch('/api/v1/session/logout', {method:'POST'});
+  location.href = '/login';
+});
+document.getElementById('gate-logout-link').addEventListener('click', async (e)=>{
+  e.preventDefault();
+  await fetch('/api/v1/session/logout', {method:'POST'});
+  location.href = '/login';
+});
+
+// ==========================================================
+// Cities
+// ==========================================================
+async function loadCities() {
+  const xs = await (await fetch('/api/v1/cities')).json();
+  STATE.cities = xs;
+  for (const sel of [document.getElementById('p-city'), document.getElementById('flip-buy'), document.getElementById('flip-sell')]) {
+    for (const c of xs) {
+      const o = document.createElement('option'); o.value=c; o.textContent=c; sel.appendChild(o);
+    }
+  }
+}
+
+// ==========================================================
+// Categorias (sidebar)
+// ==========================================================
+const CAT_LABELS = {
+  weapon: 'Armas', armor: 'Armaduras', accessory: 'Accesorios',
+  consumable: 'Consumibles', tool: 'Herramientas', mount: 'Monturas',
+  artifact_material: 'Artefactos', resource: 'Recursos', farming: 'Granja',
+  furniture: 'Muebles', journal: 'Libros', laborer: 'Trabajadores', misc: 'Otros',
+};
+const SUB_LABELS = {
+  // weapons
+  sword:'Espadas', axe:'Hachas', mace:'Mazas', hammer:'Martillos', dagger:'Dagas',
+  bow:'Arcos', crossbow:'Ballestas', spear:'Lanzas', quarterstaff:'Bastones',
+  fire_staff:'Báculos fuego', holy_staff:'Báculos sagrados', arcane_staff:'Báculos arcanos',
+  frost_staff:'Báculos escarcha', nature_staff:'Báculos naturaleza', curse_staff:'Báculos malditos',
+  shield:'Escudos', torch:'Antorchas', horn:'Cuernos', book:'Libros',
+  orb:'Orbes', totem:'Tótems', tome:'Tomos', other:'Otros',
+  // armor
+  cloth_head:'Cabeza tela', cloth_chest:'Pecho tela', cloth_shoes:'Botas tela',
+  leather_head:'Cabeza cuero', leather_chest:'Pecho cuero', leather_shoes:'Botas cuero',
+  plate_head:'Cabeza placa', plate_chest:'Pecho placa', plate_shoes:'Botas placa',
+  artifact_head:'Cabeza artefacto', artifact_chest:'Pecho artefacto', artifact_shoes:'Botas artefacto',
+  // accessory
+  cape:'Capas', bag:'Mochilas',
+  // consumable
+  potion:'Pociones', food:'Comida', fish:'Pesca', gatherer_food:'Comida recolector',
+  // tools
+  pickaxe:'Picos', sickle:'Hoces', skinningknife:'Cuchillos', stonehammer:'Martillos',
+  woodaxe:'Hachas madera', fishing_rod:'Cañas', demolition_hammer:'Mazos demolición',
+};
+
+async function loadCategories() {
+  const d = await api('/api/v1/catalog/categories');
+  STATE.categoriesTree = d.categories;
+  const root = document.getElementById('cat-tree');
+  root.innerHTML = '<span class="cat active" data-cat="">Todas <span class="count">'+fmt(d.categories.reduce((a,c)=>a+c.count,0))+'</span></span>';
+  for (const c of d.categories) {
+    const lab = CAT_LABELS[c.category] || c.category;
+    const el = document.createElement('div');
+    el.innerHTML = `<span class="cat" data-cat="${esc(c.category)}">${esc(lab)} <span class="count">${fmt(c.count)}</span></span>`;
+    const subs = document.createElement('div');
+    subs.style.display = 'none';
+    for (const s of c.subcategories) {
+      const slab = SUB_LABELS[s.id] || s.id;
+      const sub = document.createElement('span');
+      sub.className = 'sub'; sub.dataset.cat = c.category; sub.dataset.sub = s.id;
+      sub.innerHTML = `${esc(slab)} <span class="count">${fmt(s.count)}</span>`;
+      subs.appendChild(sub);
+    }
+    el.appendChild(subs);
+    root.appendChild(el);
+  }
+
+  root.addEventListener('click', (e)=>{
+    const c = e.target.closest('.cat');
+    const s = e.target.closest('.sub');
+    if (s) {
+      root.querySelectorAll('.cat.active,.sub.active').forEach(x=>x.classList.remove('active'));
+      s.classList.add('active');
+      STATE.cat = s.dataset.cat; STATE.sub = s.dataset.sub;
+      renderBreadcrumb(); STATE.catPage=0; loadCatalog();
+      return;
+    }
+    if (c) {
+      root.querySelectorAll('.cat.active,.sub.active').forEach(x=>x.classList.remove('active'));
+      c.classList.add('active');
+      STATE.cat = c.dataset.cat || ''; STATE.sub = '';
+      // toggle expand de sub-list
+      root.querySelectorAll('.cat').forEach(cx=>{
+        const next = cx.parentElement.querySelector('div');
+        if (next) next.style.display = (cx===c && STATE.cat) ? '' : 'none';
+      });
+      renderBreadcrumb(); STATE.catPage=0; loadCatalog();
+    }
+  });
+}
+
+function renderBreadcrumb() {
+  const el = document.getElementById('cat-breadcrumb');
+  const c = STATE.cat ? (CAT_LABELS[STATE.cat]||STATE.cat) : 'Todas';
+  const s = STATE.sub ? ' › ' + (SUB_LABELS[STATE.sub]||STATE.sub) : '';
+  const t = STATE.tier ? ` · T${STATE.tier}` : '';
+  const q = STATE.q ? ` · "${STATE.q}"` : '';
+  el.textContent = c + s + t + q;
+}
+
+// Chips de tier
+document.getElementById('tier-chips').addEventListener('click',(e)=>{
+  const c = e.target.closest('.chip'); if(!c) return;
+  document.querySelectorAll('#tier-chips .chip').forEach(x=>x.classList.remove('on'));
+  c.classList.add('on');
+  STATE.tier = parseInt(c.dataset.tier)||0;
+  renderBreadcrumb(); STATE.catPage=0; loadCatalog();
+});
+
+// Buscador texto
+let _qTimer;
+document.getElementById('f-item').addEventListener('input',(e)=>{
+  clearTimeout(_qTimer);
+  _qTimer = setTimeout(()=>{ STATE.q = e.target.value.trim(); renderBreadcrumb(); STATE.catPage=0; loadCatalog(); }, 280);
+});
+
+// ==========================================================
+// Catalog (VIEW search)
+// ==========================================================
+async function loadCatalog() {
+  const tb = document.getElementById('catalog-tbody');
+  tb.innerHTML = '<tr><td colspan="4" class="loading">Cargando...</td></tr>';
+  const q = new URLSearchParams({
+    q: STATE.q, category: STATE.cat, subcategory: STATE.sub,
+    tier: String(STATE.tier||0), lang: 'es', limit: '1500',
+  });
+  try {
+    const d = await api('/api/v1/catalog?'+q);
+    STATE.catalog = d.items;
+    document.getElementById('search-count').textContent = fmt(d.count) + ' items';
+    renderCatalog();
+  } catch (e) {
+    tb.innerHTML = `<tr><td colspan="4" class="empty">${esc(e.message)}</td></tr>`;
+  }
+}
+function renderCatalog() {
+  const tb = document.getElementById('catalog-tbody');
+  const slice = STATE.catalog.slice(STATE.catPage*STATE.CAT_PS, (STATE.catPage+1)*STATE.CAT_PS);
+  const pages = Math.max(1, Math.ceil(STATE.catalog.length/STATE.CAT_PS));
+  document.getElementById('cat-page-info').textContent = `${STATE.catPage+1}/${pages}`;
+  if (!slice.length) { tb.innerHTML = '<tr><td colspan="4" class="empty">Sin items</td></tr>'; return; }
+  tb.innerHTML = slice.map(it => `
+    <tr data-id="${esc(it.id)}">
+      <td><div class="item-cell">
+        <img class="item-img small" src="${img(it.id,1,0)}" loading="lazy" onerror="this.style.opacity=0.2">
+        <div><div>${esc(it.name_es)}</div><div class="muted" style="font-size:10px">${esc(it.id)}</div></div>
+      </div></td>
+      <td>${it.tier>0?('T'+it.tier):'-'}</td>
+      <td>${esc(CAT_LABELS[it.category]||it.category)}</td>
+      <td class="muted">${esc(SUB_LABELS[it.subcategory]||it.subcategory||'-')}</td>
+    </tr>`).join('');
+  tb.querySelectorAll('tr').forEach(tr=>tr.addEventListener('click',()=>openDetail(tr.dataset.id)));
+}
+function pageCat(d){const m=Math.max(1,Math.ceil(STATE.catalog.length/STATE.CAT_PS))-1;STATE.catPage=Math.max(0,Math.min(m,STATE.catPage+d));renderCatalog();}
+
+// ==========================================================
+// Detail modal
+// ==========================================================
+async function openDetail(itemId) {
+  const modal = document.getElementById('detail-modal');
+  const body = document.getElementById('detail-body');
+  body.innerHTML = '<span class="close" id="detail-close">&times;</span><div class="loading">Cargando...</div>';
+  modal.classList.add('visible');
+  document.getElementById('detail-close').addEventListener('click',()=>modal.classList.remove('visible'));
+  await renderDetail(itemId, 0, -1);
+}
+document.getElementById('detail-modal').addEventListener('click',(e)=>{
+  if (e.target.id==='detail-modal') e.currentTarget.classList.remove('visible');
+});
+
+async function renderDetail(itemId, quality, enchant) {
+  const body = document.getElementById('detail-body');
+  const d = await api(`/api/v1/item/${encodeURIComponent(itemId)}?quality=${quality}&enchant=${enchant}`);
+  const meta = d.item || {id: itemId, name_es: itemId, name_en: itemId, tier: 0, category: '-', subcategory: '-'};
+  const enchOpt = (cur)=>[0,1,2,3,4].map(e=>`<option value="${e}" ${cur==e?'selected':''}>+${e}</option>`).join('');
+  const qOpt = (cur)=>['Normal','Buena','Excepcional','Excelente','Obra maestra'].map((n,i)=>{
+    const v = i+1; return `<option value="${v}" ${cur==v?'selected':''}>${v} · ${n}</option>`;
+  }).join('');
+
+  // calcular mejor oferta y mejor request para resaltar
+  let bestOfferPrice=Infinity, bestRequestPrice=-Infinity;
+  for (const c of d.cities) {
+    if (c.offer && c.offer.price < bestOfferPrice) bestOfferPrice = c.offer.price;
+    if (c.request && c.request.price > bestRequestPrice) bestRequestPrice = c.request.price;
+  }
+
+  body.innerHTML = `
+    <span class="close" id="detail-close">&times;</span>
+    <div class="detail-head">
+      <img src="${img(itemId, quality||1, enchant>0?enchant:0)}" onerror="this.style.opacity=0.2">
+      <div class="meta">
+        <h2>${esc(meta.name_es)}</h2>
+        <div class="sub">${esc(meta.name_en)} · ${esc(CAT_LABELS[meta.category]||meta.category||'-')}${meta.subcategory?(' · '+esc(SUB_LABELS[meta.subcategory]||meta.subcategory)):''}${meta.tier?(' · T'+meta.tier):''}</div>
+        <div class="id">${esc(meta.id||itemId)}</div>
+      </div>
+    </div>
+    <div class="detail-selectors">
+      <label>Calidad
+        <select id="det-q"><option value="0">Cualquiera</option>${qOpt(quality)}</select>
+      </label>
+      <label>Encantamiento
+        <select id="det-e"><option value="-1">Cualquiera</option>${enchOpt(enchant)}</select>
+      </label>
+    </div>
+    <table>
+      <thead><tr>
+        <th>Ciudad</th>
+        <th style="text-align:right">Venta más barata</th>
+        <th style="text-align:right">Stock</th>
+        <th>Actualizado</th>
+        <th>Contrib.</th>
+        <th style="text-align:right">Compra más cara</th>
+        <th style="text-align:right">Demanda</th>
+        <th>Actualizado</th>
+        <th>Contrib.</th>
+      </tr></thead>
+      <tbody>
+        ${d.cities.map(c=>{
+          const o=c.offer, r=c.request;
+          const oClass = o && o.price===bestOfferPrice ? 'best' : '';
+          const rClass = r && r.price===bestRequestPrice ? 'best' : '';
+          return `<tr>
+            <td class="city">${esc(c.city)}</td>
+            <td class="price ${oClass}">${o?fmtSilver(o.price):'-'}${o?` <span class="muted">Q${o.quality} +${o.enchant}</span>`:''}</td>
+            <td class="amount">${o?fmt(o.amount):'-'}</td>
+            <td class="time">${o?timeShort(o.captured_at):'-'}</td>
+            <td class="uploader">${o?esc(o.uploader||'-'):'-'}</td>
+            <td class="price ${rClass}" style="color:#6cf">${r?fmtSilver(r.price):'-'}${r?` <span class="muted">Q${r.quality} +${r.enchant}</span>`:''}</td>
+            <td class="amount">${r?fmt(r.amount):'-'}</td>
+            <td class="time">${r?timeShort(r.captured_at):'-'}</td>
+            <td class="uploader">${r?esc(r.uploader||'-'):'-'}</td>
+          </tr>`;
+        }).join('')}
+      </tbody>
+    </table>
+    <p class="muted" style="margin-top:10px">
+      Las filas verdes marcan la mejor venta (precio más bajo) y la mejor compra (precio más alto).
+    </p>
+  `;
+  document.getElementById('detail-close').addEventListener('click',()=>document.getElementById('detail-modal').classList.remove('visible'));
+  document.getElementById('det-q').addEventListener('change',(e)=>renderDetail(itemId, parseInt(e.target.value)||0, enchant));
+  document.getElementById('det-e').addEventListener('change',(e)=>renderDetail(itemId, quality, parseInt(e.target.value)));
+}
+
+// ==========================================================
+// Prices (VIEW prices)
+// ==========================================================
+async function loadPrices() {
+  const q = new URLSearchParams({
+    item: document.getElementById('p-item').value,
+    city: document.getElementById('p-city').value,
+    type: document.getElementById('p-type').value,
+    mode: document.getElementById('p-mode').value,
+  });
+  const tb = document.getElementById('prices-tbody');
+  tb.innerHTML = '<tr><td colspan="8" class="loading">Cargando...</td></tr>';
+  try {
+    const d = await api('/api/v1/items?'+q);
+    STATE.prices = d.rows;
+    document.getElementById('stat-unique').textContent = fmt(d.stats.unique);
+    document.getElementById('stat-orders').textContent = fmt(d.stats.total);
+    document.getElementById('stat-latest').textContent = d.stats.latest || '-';
+    STATE.pricesPage = 0; renderPrices();
+  } catch (e) {
+    tb.innerHTML = `<tr><td colspan="8" class="empty">${esc(e.message)}</td></tr>`;
+  }
+}
+function renderPrices() {
+  const tb = document.getElementById('prices-tbody');
+  const sorted = [...STATE.prices].sort((a,b)=>{
+    let av=a[STATE.pricesSort], bv=b[STATE.pricesSort];
+    if (typeof av==='string') { av=av.toLowerCase(); bv=(bv||'').toLowerCase(); }
+    return av<bv?(STATE.pricesAsc?-1:1):av>bv?(STATE.pricesAsc?1:-1):0;
+  });
+  const slice = sorted.slice(STATE.pricesPage*STATE.P_PS, (STATE.pricesPage+1)*STATE.P_PS);
+  document.getElementById('stat-shown').textContent = `${slice.length}/${sorted.length}`;
+  document.getElementById('prices-page-info').textContent = `${STATE.pricesPage+1}/${Math.max(1,Math.ceil(sorted.length/STATE.P_PS))}`;
+  if (!slice.length) { tb.innerHTML='<tr><td colspan="8" class="empty">Sin datos</td></tr>'; return; }
+  tb.innerHTML = slice.map(r=>`
+    <tr data-id="${esc(r.item_albion_id)}">
+      <td><div class="item-cell">
+        <img class="item-img" src="${img(r.item_albion_id,r.quality_level,r.enchantment_level)}" loading="lazy" onerror="this.style.opacity=0.2">
+        ${esc(r.item_albion_id)}
+      </div></td>
+      <td class="quality">${r.quality_level}</td>
+      <td class="enchant">${r.enchantment_level}</td>
+      <td class="price">${fmtSilver(r.unit_price_silver)}</td>
+      <td class="amount">${fmt(r.amount)}</td>
+      <td class="city">${esc(r.city)}</td>
+      <td class="time">${timeShort(r.captured_at)}</td>
+      <td class="uploader">${esc(r.uploader||'-')}</td>
+    </tr>`).join('');
+  tb.querySelectorAll('tr').forEach(tr=>tr.addEventListener('click',()=>openDetail(tr.dataset.id)));
+  document.querySelectorAll('[data-view="prices"] th').forEach(th=>{
+    th.classList.remove('sorted-asc','sorted-desc');
+    if (th.dataset.sort===STATE.pricesSort) th.classList.add(STATE.pricesAsc?'sorted-asc':'sorted-desc');
+  });
+}
+function pagePrices(d){
+  const m=Math.max(1,Math.ceil(STATE.prices.length/STATE.P_PS))-1;
+  STATE.pricesPage=Math.max(0,Math.min(m,STATE.pricesPage+d));renderPrices();
+}
+document.querySelectorAll('[data-view="prices"] th').forEach(th=>th.addEventListener('click',()=>{
+  const k=th.dataset.sort; if(!k) return;
+  if (STATE.pricesSort===k) STATE.pricesAsc=!STATE.pricesAsc; else { STATE.pricesSort=k; STATE.pricesAsc=true; }
+  renderPrices();
+}));
+document.getElementById('p-item').addEventListener('input',()=>{clearTimeout(window._pt); window._pt=setTimeout(loadPrices,300);});
+['p-city','p-type','p-mode'].forEach(id=>document.getElementById(id).addEventListener('change',loadPrices));
+document.getElementById('auto').addEventListener('change',e=>{
+  if (e.target.checked) STATE.priceTimer=setInterval(loadPrices,10000); else clearInterval(STATE.priceTimer);
+});
+
+// ==========================================================
+// Flips (VIEW flips)
+// ==========================================================
+function populateFlipSelectors() {
+  const sel = document.getElementById('flip-cat');
+  if (sel.children.length > 1) return;
+  for (const c of STATE.categoriesTree) {
+    const o=document.createElement('option');
+    o.value=c.category; o.textContent=(CAT_LABELS[c.category]||c.category)+' ('+c.count+')';
+    sel.appendChild(o);
+  }
+}
+async function loadFlips() {
+  const q = new URLSearchParams({
+    buy_city: document.getElementById('flip-buy').value,
+    sell_city: document.getElementById('flip-sell').value,
+    category: document.getElementById('flip-cat').value,
+    tier: document.getElementById('flip-tier').value,
+    min_margin: document.getElementById('flip-min-margin').value || '0',
+    min_margin_pct: document.getElementById('flip-min-pct').value || '0',
+    max_age_min: document.getElementById('flip-age').value || '60',
+    limit: '300',
+  });
+  const tb = document.getElementById('flips-tbody');
+  tb.innerHTML = '<tr><td colspan="11" class="loading">Calculando...</td></tr>';
+  try {
+    const d = await api('/api/v1/flips?'+q);
+    document.getElementById('flip-count').textContent = `${fmt(d.count)} oportunidades`;
+    if (!d.rows.length) { tb.innerHTML='<tr><td colspan="11" class="empty">Sin oportunidades</td></tr>'; return; }
+    tb.innerHTML = d.rows.map(r=>`
+      <tr data-id="${esc(r.item_id)}">
+        <td><div class="item-cell">
+          <img class="item-img small" src="${img(r.item_id,r.quality,r.enchant)}" loading="lazy" onerror="this.style.opacity=0.2">
+          <div><div>${esc(r.name_es)}</div><div class="muted" style="font-size:10px">${esc(r.item_id)}</div></div>
+        </div></td>
+        <td class="quality">${r.quality}</td>
+        <td class="enchant">${r.enchant}</td>
+        <td class="city">${esc(r.buy_city)}</td>
+        <td class="price">${fmtSilver(r.buy_price)}</td>
+        <td class="amount">${fmt(r.buy_amount)}</td>
+        <td class="city">${esc(r.sell_city)}</td>
+        <td class="price" style="color:#6cf">${fmtSilver(r.sell_price)}</td>
+        <td class="amount">${fmt(r.sell_amount)}</td>
+        <td class="margin">${fmtSilver(r.margin)}</td>
+        <td class="margin">${r.margin_pct.toFixed(1)}%</td>
+      </tr>`).join('');
+    tb.querySelectorAll('tr').forEach(tr=>tr.addEventListener('click',()=>openDetail(tr.dataset.id)));
+  } catch (e) {
+    tb.innerHTML = `<tr><td colspan="11" class="empty">${esc(e.message)}</td></tr>`;
+  }
+}
+
+// ==========================================================
+// Crafting (VIEW crafting)
+// ==========================================================
+function populateCraftSelectors() {
+  const sel = document.getElementById('craft-cat');
+  if (sel.children.length > 1) return;
+  for (const c of STATE.categoriesTree) {
+    const o=document.createElement('option');
+    o.value=c.category; o.textContent=(CAT_LABELS[c.category]||c.category)+' ('+c.count+')';
+    sel.appendChild(o);
+  }
+}
+
+async function loadCrafting() {
+  const q = new URLSearchParams({
+    category: document.getElementById('craft-cat').value,
+    tier: document.getElementById('craft-tier').value,
+    sell_to: document.getElementById('craft-sell').value,
+    use_focus: document.getElementById('craft-focus').value==='1' ? 'true' : 'false',
+    fee_per_100_nut: document.getElementById('craft-fee').value || '800',
+    min_profit: document.getElementById('craft-min-profit').value || '0',
+    max_age_min: document.getElementById('craft-age').value || '120',
+    limit: '200',
+  });
+  const tb = document.getElementById('crafting-tbody');
+  tb.innerHTML = '<tr><td colspan="11" class="loading">Calculando rentabilidad...</td></tr>';
+  try {
+    const d = await api('/api/v1/crafting?'+q);
+    document.getElementById('craft-count').textContent = `${fmt(d.count)} items rentables`;
+    if (!d.rows.length) { tb.innerHTML='<tr><td colspan="11" class="empty">Sin crafteos rentables con estos filtros. Prueba subir la antigüedad o bajar el beneficio mínimo.</td></tr>'; return; }
+    tb.innerHTML = d.rows.map(r=>{
+      const star = r.bonus_city ? ' <span title="Ciudad bonus (+return rate)">⭐</span>' : '';
+      const profCls = r.profit >= 0 ? 'margin' : 'margin neg';
+      return `
+      <tr data-id="${esc(r.item_id)}">
+        <td><div class="item-cell">
+          <img class="item-img small" src="${img(r.item_id,1,0)}" loading="lazy" onerror="this.style.opacity=0.2">
+          <div><div>${esc(r.name_es)}</div><div class="muted" style="font-size:10px">${esc(r.item_id)}</div></div>
+        </div></td>
+        <td>T${r.tier||'-'}</td>
+        <td class="city">${esc(r.buy_mats_city)}</td>
+        <td class="city">${esc(r.craft_city)}${star} <span class="muted">(${r.return_rate}%)</span></td>
+        <td class="city">${esc(r.sell_city)}</td>
+        <td class="price">${fmtSilver(r.materials_cost)}</td>
+        <td class="price" style="color:#f96">${fmtSilver(r.effective_mat_cost + r.crafting_fee)}</td>
+        <td class="price" style="color:#6cf">${fmtSilver(r.sell_price)}</td>
+        <td class="price">${fmtSilver(r.revenue_net)}</td>
+        <td class="${profCls}">${fmtSilver(r.profit)}</td>
+        <td class="${profCls}">${r.profit_pct.toFixed(1)}%</td>
+      </tr>`;
+    }).join('');
+    tb.querySelectorAll('tr').forEach(tr=>tr.addEventListener('click',()=>openDetail(tr.dataset.id)));
+  } catch (e) {
+    tb.innerHTML = `<tr><td colspan="11" class="empty">${esc(e.message)}</td></tr>`;
+  }
+}
+
+// Auto-recargar al cambiar filtros (excepto numericos - esos con Enter o boton)
+['craft-cat','craft-tier','craft-sell','craft-focus'].forEach(id=>
+  document.getElementById(id).addEventListener('change', loadCrafting));
+['craft-fee','craft-min-profit','craft-age'].forEach(id=>
+  document.getElementById(id).addEventListener('keydown', e=>{ if(e.key==='Enter') loadCrafting(); }));
+
+// ==========================================================
+// Contribuciones
+// ==========================================================
+async function loadContributions() {
+  document.getElementById('contrib-modal').classList.add('visible');
+  const tb = document.getElementById('contrib-tbody');
+  tb.innerHTML = '<tr><td colspan="6" class="loading">Cargando...</td></tr>';
+  try {
+    const d = await (await fetch('/api/v1/contributions')).json();
+    document.getElementById('contrib-threshold').textContent = fmt(d.threshold);
+    if (!d.rows.length) { tb.innerHTML='<tr><td colspan="6" class="empty">Sin datos</td></tr>'; return; }
+    tb.innerHTML = d.rows.map(u=>`
+      <tr>
+        <td>${esc(u.name)} ${u.is_admin?'<span class="pill pill-adm">ADMIN</span>':''}${u.disabled?' <span class="pill pill-no">(disabled)</span>':''}</td>
+        <td class="price">${fmt(u.contributions_today)}</td>
+        <td style="text-align:right">${fmt(u.orders_today)}</td>
+        <td style="text-align:right">${fmt(u.history_today)}</td>
+        <td class="amount">${fmt(u.orders_total+u.history_total)}</td>
+        <td>${u.meets_threshold?'<span class="pill pill-ok">OK</span>':'<span class="pill pill-no">Bloqueado</span>'}</td>
+      </tr>`).join('');
+  } catch (e) {
+    tb.innerHTML = `<tr><td colspan="6" class="empty">Error</td></tr>`;
+  }
+}
+document.getElementById('contrib-link').addEventListener('click',(e)=>{e.preventDefault(); loadContributions();});
+document.getElementById('gate-contrib-link').addEventListener('click',(e)=>{e.preventDefault(); loadContributions();});
+document.getElementById('contrib-close').addEventListener('click',()=>document.getElementById('contrib-modal').classList.remove('visible'));
+document.getElementById('contrib-modal').addEventListener('click',(e)=>{if(e.target.id==='contrib-modal')e.currentTarget.classList.remove('visible');});
+
+// ==========================================================
+// Init
+// ==========================================================
+(async ()=>{
+  await loadMe();
+  if (STATE.me && !STATE.me.allowed && !STATE.me.is_admin) return; // bloqueado
+  await loadCities();
+  await loadCategories();
+  await loadCatalog();
+})();
+</script>
+
+</body>
+</html>

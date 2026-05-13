@@ -1,0 +1,176 @@
+# Estructura completa del mercado de Albion Online
+# Todos los numeros INCLUYEN "Todo" como primera opcion
+#
+# Formato:
+#   items: N        -> N opciones directas (son hojas, se clickean)
+#   subs:           -> tiene subcategorias, hover para abrir siguiente columna
+#     - items: N    -> esa subcategoria tiene N hojas
+#     - subs:       -> esa subcategoria tiene mas niveles anidados
+#
+# El scanner siempre salta "Todo" (indice 0) en cada nivel
+
+categories:
+  # === Col1 indice 1: ARMAS ===
+  # 18 subcategorias en col2 (incl Todo)
+  # Cada una tiene 9 items en col3 (incl Todo)
+  - name: Armas
+    subs:
+      - {items: 9}   # Arco
+      - {items: 9}   # Ballesta
+      - {items: 9}   # Hacha
+      - {items: 9}   # Daga
+      - {items: 9}   # Martillo
+      - {items: 9}   # Guantes de guerra
+      - {items: 9}   # Maza
+      - {items: 9}   # Vara
+      - {items: 9}   # Lanza
+      - {items: 9}   # Espada
+      - {items: 9}   # Baston arcano
+      - {items: 9}   # Baston maldito
+      - {items: 9}   # Baston igneo
+      - {items: 9}   # Baston de hielo
+      - {items: 9}   # Baston sagrada
+      - {items: 9}   # Baston natural
+      - {items: 9}   # Baston de Cambiaformas
+
+  # === Col1 indice 2: ARMADURA DE PECHO ===
+  # 4 subcats col2 (incl Todo), cada una 10 items col3
+  - name: Armadura de Pecho
+    subs:
+      - {items: 10}
+      - {items: 10}
+      - {items: 10}
+
+  # === Col1 indice 3: ARMADURA DE CABEZA ===
+  - name: Armadura de Cabeza
+    subs:
+      - {items: 10}
+      - {items: 10}
+      - {items: 10}
+
+  # === Col1 indice 4: ARMADURA DE PIES ===
+  - name: Armadura de Pies
+    subs:
+      - {items: 10}
+      - {items: 10}
+      - {items: 10}
+
+  # === Col1 indice 5: ARMAS SECUNDARIAS ===
+  # 4 subcats col2 (incl Todo), cada una 7 items col3
+  - name: Armas Secundarias
+    subs:
+      - {items: 7}
+      - {items: 7}
+      - {items: 7}
+
+  # === Col1 indice 6: CAPAS ===
+  # 16 items directos en col2 (incl Todo), NO hay col3
+  - name: Capas
+    items: 16
+
+  # === Col1 indice 7: BOLSAS ===
+  # 3 items directos en col2 (incl Todo)
+  - name: Bolsas
+    items: 3
+
+  # === Col1 indice 8: MONTURA ===
+  # 4 subcats col2 (incl Todo), con 14/17/14 items en col3
+  - name: Montura
+    subs:
+      - {items: 14}
+      - {items: 17}
+      - {items: 14}
+
+  # === Col1 indice 9: CONSUMIBLE ===
+  # 5 subcats col2 (incl Todo), con 10/17/7/3 items en col3
+  - name: Consumible
+    subs:
+      - {items: 10}
+      - {items: 17}
+      - {items: 7}
+      - {items: 3}
+
+  # === Col1 indice 10: EQUIPO DE RECOLECCION ===
+  # 8 subcats col2 (incl Todo), con 7/6/6/6/6/6/2 items en col3
+  - name: Equipo de Recoleccion
+    subs:
+      - {items: 7}
+      - {items: 6}
+      - {items: 6}
+      - {items: 6}
+      - {items: 6}
+      - {items: 6}
+      - {items: 2}
+
+  # === Col1 indice 11: FABRICACION ===
+  # 7 subcats col2 (incl Todo)
+  # La 5ta subcat tiene 4 items, de esos el 1ro y 2do tienen sub-items (col4)
+  - name: Fabricacion
+    subs:
+      - {items: 6}   # 1ra subcat: 6 items
+      - {items: 6}   # 2da subcat: 6 items
+      - {items: 4}   # 3ra subcat: 4 items
+      - {items: 7}   # 4ta subcat: 7 items
+      - subs:         # 5ta subcat: 4 items, 2 con sub-items (col4)
+          - {items: 3}   # 1er item tiene 3 sub-items
+          - {items: 8}   # 2do item tiene 8 sub-items
+          - leaf: true    # 3er item es hoja
+          - leaf: true    # 4to item es hoja
+      - {items: 11}  # 6ta subcat: 11 items
+
+  # === Col1 indice 12: ARTEFACTO ===
+  # 9 subcats col2 (incl Todo)
+  # Varias tienen sub-items en col4
+  - name: Artefacto
+    subs:
+      # 1ra subcat: 18 items col3 (incl Todo), 17 reales, cada uno con 6 col4 items
+      - subs_count: 18
+        items_each: 6
+      # 2da subcat: 4 items col3 (incl Todo), 3 reales, cada uno con 6 col4 items
+      - subs_count: 4
+        items_each: 6
+      # 3ra subcat: igual que 2da
+      - subs_count: 4
+        items_each: 6
+      # 4ta subcat: igual que 2da
+      - subs_count: 4
+        items_each: 6
+      # 5ta subcat: igual que 3ra
+      - subs_count: 4
+        items_each: 6
+      # 6ta subcat: 6 items directos (hojas, sin col4)
+      - {items: 6}
+      # 7ma subcat: 15 items directos (hojas, sin col4)
+      - {items: 15}
+      # 8va subcat: PENDIENTE (usuario no especifico)
+      - {items: 1}  # TODO: completar
+
+  # === Col1 indice 13: AGRICULTURA ===
+  # 6 subcats col2 (incl Todo), 5 reales
+  # Cada una tiene 3 col3 items (incl Todo), 2 reales
+  # Cada col3 tiene 9 col4 items
+  - name: Agricultura
+    subs:
+      - subs_count: 3
+        items_each: 9
+      - subs_count: 3
+        items_each: 9
+      - subs_count: 3
+        items_each: 9
+      - subs_count: 3
+        items_each: 9
+      - subs_count: 3
+        items_each: 9
+
+  # === PENDIENTES (usuario dira mas) ===
+  # Col1 indice 14: MUEBLE
+  - name: Mueble
+    items: 1  # TODO
+
+  # Col1 indice 15: COSMETICA
+  - name: Cosmetica
+    items: 1  # TODO
+
+  # Col1 indice 16: OTROS
+  - name: Otros
+    items: 1  # TODO

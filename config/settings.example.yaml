@@ -1,0 +1,45 @@
+database:
+  host: localhost
+  port: 5432
+  name: albion_market
+  user: postgres
+  password: your_password_here
+
+capture:
+  game_port: 5056
+  batch_size: 100
+  flush_interval_seconds: 5
+  heartbeat_interval_seconds: 30
+
+workers:
+  - city: Bridgewatch
+    city_id: 3005
+    local_port: null  # Auto-detect or set manually
+
+  - city: Fort Sterling
+    city_id: 3002
+    local_port: null
+
+  - city: Lymhurst
+    city_id: 3003
+    local_port: null
+
+  - city: Martlock
+    city_id: 3004
+    local_port: null
+
+  - city: Thetford
+    city_id: 3000
+    local_port: null
+
+  - city: Caerleon
+    city_id: 3008
+    local_port: null
+
+  - city: Black Market
+    city_id: 3003  # Adjust with correct ID
+    local_port: null
+
+  - city: Brecilien
+    city_id: 4002
+    local_port: null
