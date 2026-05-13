@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 # Albion Market Collector
 
 Sistema **colaborativo** para capturar y analizar datos del mercado de
@@ -362,3 +363,6 @@ DAILY_CONTRIB_THRESHOLD = 4000
 MIT. Datos de Albion Online © Sandbox Interactive — este proyecto solo
 captura tráfico del cliente para análisis personal/comunitario, no
 modifica el cliente ni viola TOS.
+=======
+# Albion-Market-Scrapper
+>>>>>>> 41ba0791dded398b935347cf27fd9b63f66e6a57
